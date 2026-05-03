@@ -80,7 +80,6 @@
             font-weight: 800;
             margin-bottom: 30px;
             font-variant-numeric: tabular-nums;
-            /* Added a tighter letter-spacing for the colon and overall block */
             letter-spacing: -0.25rem; 
             text-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
             height: 150px; 
@@ -88,17 +87,23 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            
+            /* Added smooth transitions for opacity and scale */
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* The individual digits inside the timer */
+        /* The class applied via JavaScript to fade out the timer */
+        .timer-fade-out {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
         .digit {
             display: inline-block;
-            /* Reduced from 0.9em to 0.6em to bring the digits much closer together */
             min-width: 0.6em; 
             text-align: center;
         }
 
-        /* The Slide Up Animation */
         .slide-up {
             animation: slideUpAnim 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
@@ -172,6 +177,7 @@
         let timerInterval = null;
         let isRunning = false;
         let currentMode = 'focus';
+        let isTransitioning = false; // Prevents clicking during a fade
 
         const timerDisplay = document.getElementById('timer');
         const startBtn = document.getElementById('startBtn');
@@ -181,7 +187,9 @@
         function updateDisplay() {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
-            const newTimeStr = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            
+            // Added a leading zero to minutes so '5:00' becomes '05:00'
+            const newTimeStr = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 
             if (timerDisplay.children.length !== newTimeStr.length) {
                 timerDisplay.innerHTML = '';
@@ -189,7 +197,6 @@
                     const span = document.createElement('span');
                     span.className = 'digit';
                     
-                    // Remove min-width for the colon so it doesn't take up too much space
                     if (newTimeStr[i] === ':') {
                         span.style.minWidth = '0.3em';
                     }
@@ -212,23 +219,44 @@
         }
 
         function setMode(mode) {
+            // Do not interrupt an active transition
+            if (isTransitioning) return;
+            isTransitioning = true;
+
             clearInterval(timerInterval);
             isRunning = false;
-            currentMode = mode;
             startBtn.textContent = 'Start';
 
-            if (mode === 'focus') {
-                timeLeft = FOCUS_TIME;
-                document.body.style.backgroundColor = 'var(--bg-focus)';
-                focusBtn.classList.add('active');
-                breakBtn.classList.remove('active');
-            } else if (mode === 'break') {
-                timeLeft = BREAK_TIME;
-                document.body.style.backgroundColor = 'var(--bg-break)';
-                breakBtn.classList.add('active');
-                focusBtn.classList.remove('active');
-            }
-            updateDisplay();
+            // 1. Fade out the timer and shrink it
+            timerDisplay.classList.add('timer-fade-out');
+
+            // 2. Wait 400ms for the CSS animation to finish, then swap the data
+            setTimeout(() => {
+                currentMode = mode;
+
+                if (mode === 'focus') {
+                    timeLeft = FOCUS_TIME;
+                    document.body.style.backgroundColor = 'var(--bg-focus)';
+                    focusBtn.classList.add('active');
+                    breakBtn.classList.remove('active');
+                } else if (mode === 'break') {
+                    timeLeft = BREAK_TIME;
+                    document.body.style.backgroundColor = 'var(--bg-break)';
+                    breakBtn.classList.add('active');
+                    focusBtn.classList.remove('active');
+                }
+                
+                updateDisplay();
+                
+                // 3. Remove the fade class to bring the timer back up
+                timerDisplay.classList.remove('timer-fade-out');
+                
+                // 4. Unlock the transition state
+                setTimeout(() => {
+                    isTransitioning = false;
+                }, 400); 
+
+            }, 400);
         }
 
         function toggleTimer() {
@@ -239,18 +267,16 @@
                 timerInterval = setInterval(() => {
                     timeLeft--;
                     updateDisplay();
+                    
                     if (timeLeft === 0) {
                         clearInterval(timerInterval);
                         isRunning = false;
                         startBtn.textContent = 'Start';
                         
-                        if (currentMode === 'focus') {
-                            alert("Great job! Time to take a 5-minute break.");
-                            setMode('break');
-                        } else {
-                            alert("Break is over! Ready to focus?");
-                            setMode('focus');
-                        }
+                        // Wait 1 second so the user can see '00:00' before auto-switching
+                        setTimeout(() => {
+                            setMode(currentMode === 'focus' ? 'break' : 'focus');
+                        }, 1000);
                     }
                 }, 1000);
                 startBtn.textContent = 'Pause';
