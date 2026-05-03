@@ -6,8 +6,8 @@
     <title>Focus Timer</title>
     <style>
         :root {
-            --bg-focus: #1a1616; /* Deep, subtle red tint */
-            --bg-break: #151a16; /* Deep, subtle green tint */
+            --bg-focus: #1a1616;
+            --bg-break: #151a16;
             --text: #f3f4f6;
             --accent-focus: #ff6b6b;
             --accent-break: #51cf66;
@@ -34,7 +34,6 @@
             align-items: center;
         }
 
-        /* Top Mode Toggles */
         .modes {
             margin-bottom: 25px;
             background: rgba(255, 255, 255, 0.05);
@@ -76,7 +75,6 @@
             box-shadow: 0 2px 10px rgba(81, 207, 102, 0.3);
         }
 
-        /* Main Timer Display */
         #timer {
             font-size: 8.5rem;
             font-weight: 800;
@@ -84,10 +82,30 @@
             font-variant-numeric: tabular-nums;
             letter-spacing: -0.15rem;
             text-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-            transition: color 0.8s ease;
+            /* Set a fixed height to prevent the layout from bouncing during animation */
+            height: 150px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
 
-        /* Primary Controls (Start/Reset) */
+        /* The Slide Up Animation */
+        .slide-up {
+            animation: slideUpAnim 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes slideUpAnim {
+            0% {
+                transform: translateY(20px);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
         .controls button {
             background: var(--btn-bg);
             border: none;
@@ -114,7 +132,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        /* Specific Start Button Styling */
         #startBtn {
             background: var(--text);
             color: #121212;
@@ -156,7 +173,18 @@
         function updateDisplay() {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
+            
+            // Remove the animation class
+            timerDisplay.classList.remove('slide-up');
+            
+            // Trigger a reflow (this forces the browser to recognize the class was removed)
+            void timerDisplay.offsetWidth; 
+            
+            // Update the text
             timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            
+            // Re-add the animation class so it plays again
+            timerDisplay.classList.add('slide-up');
         }
 
         function setMode(mode) {
@@ -213,6 +241,9 @@
             timeLeft = currentMode === 'focus' ? FOCUS_TIME : BREAK_TIME;
             updateDisplay();
         }
+        
+        // Initialize display with animation
+        updateDisplay();
     </script>
 </body>
 </html>
