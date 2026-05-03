@@ -82,12 +82,18 @@
             font-variant-numeric: tabular-nums;
             letter-spacing: -0.15rem;
             text-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-            /* Set a fixed height to prevent the layout from bouncing during animation */
             height: 150px; 
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
+        }
+
+        /* The individual digits inside the timer */
+        .digit {
+            display: inline-block; /* Allows the transform animation to work on inline elements */
+            min-width: 0.9em; /* Keeps the spacing consistent so numbers don't jitter left/right */
+            text-align: center;
         }
 
         /* The Slide Up Animation */
@@ -149,7 +155,7 @@
             <button onclick="setMode('focus')" id="focusBtn" class="active">Focus</button>
             <button onclick="setMode('break')" id="breakBtn">Break</button>
         </div>
-        <div id="timer">25:00</div>
+        <div id="timer"></div>
         <div class="controls">
             <button onclick="toggleTimer()" id="startBtn">Start</button>
             <button onclick="resetTimer()">Reset</button>
@@ -173,18 +179,32 @@
         function updateDisplay() {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
-            
-            // Remove the animation class
-            timerDisplay.classList.remove('slide-up');
-            
-            // Trigger a reflow (this forces the browser to recognize the class was removed)
-            void timerDisplay.offsetWidth; 
-            
-            // Update the text
-            timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-            
-            // Re-add the animation class so it plays again
-            timerDisplay.classList.add('slide-up');
+            const newTimeStr = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            // If the container is empty or the string length changed, build the spans from scratch
+            if (timerDisplay.children.length !== newTimeStr.length) {
+                timerDisplay.innerHTML = '';
+                for (let i = 0; i < newTimeStr.length; i++) {
+                    const span = document.createElement('span');
+                    span.className = 'digit';
+                    span.textContent = newTimeStr[i];
+                    timerDisplay.appendChild(span);
+                }
+                return; // Skip animation on the very first load
+            }
+
+            // Otherwise, check each digit and animate only the ones that changed
+            const spans = timerDisplay.children;
+            for (let i = 0; i < newTimeStr.length; i++) {
+                if (spans[i].textContent !== newTimeStr[i]) {
+                    spans[i].textContent = newTimeStr[i];
+                    
+                    // Trigger reflow to restart animation on this specific span
+                    spans[i].classList.remove('slide-up');
+                    void spans[i].offsetWidth; 
+                    spans[i].classList.add('slide-up');
+                }
+            }
         }
 
         function setMode(mode) {
@@ -242,7 +262,7 @@
             updateDisplay();
         }
         
-        // Initialize display with animation
+        // Initialize the timer display immediately when the page loads
         updateDisplay();
     </script>
 </body>
