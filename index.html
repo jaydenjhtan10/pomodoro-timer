@@ -80,7 +80,8 @@
             font-weight: 800;
             margin-bottom: 30px;
             font-variant-numeric: tabular-nums;
-            letter-spacing: -0.15rem;
+            /* Added a tighter letter-spacing for the colon and overall block */
+            letter-spacing: -0.25rem; 
             text-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
             height: 150px; 
             display: flex;
@@ -91,8 +92,9 @@
 
         /* The individual digits inside the timer */
         .digit {
-            display: inline-block; /* Allows the transform animation to work on inline elements */
-            min-width: 0.9em; /* Keeps the spacing consistent so numbers don't jitter left/right */
+            display: inline-block;
+            /* Reduced from 0.9em to 0.6em to bring the digits much closer together */
+            min-width: 0.6em; 
             text-align: center;
         }
 
@@ -181,25 +183,27 @@
             const seconds = timeLeft % 60;
             const newTimeStr = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 
-            // If the container is empty or the string length changed, build the spans from scratch
             if (timerDisplay.children.length !== newTimeStr.length) {
                 timerDisplay.innerHTML = '';
                 for (let i = 0; i < newTimeStr.length; i++) {
                     const span = document.createElement('span');
                     span.className = 'digit';
+                    
+                    // Remove min-width for the colon so it doesn't take up too much space
+                    if (newTimeStr[i] === ':') {
+                        span.style.minWidth = '0.3em';
+                    }
+                    
                     span.textContent = newTimeStr[i];
                     timerDisplay.appendChild(span);
                 }
-                return; // Skip animation on the very first load
+                return;
             }
 
-            // Otherwise, check each digit and animate only the ones that changed
             const spans = timerDisplay.children;
             for (let i = 0; i < newTimeStr.length; i++) {
                 if (spans[i].textContent !== newTimeStr[i]) {
                     spans[i].textContent = newTimeStr[i];
-                    
-                    // Trigger reflow to restart animation on this specific span
                     spans[i].classList.remove('slide-up');
                     void spans[i].offsetWidth; 
                     spans[i].classList.add('slide-up');
@@ -262,7 +266,6 @@
             updateDisplay();
         }
         
-        // Initialize the timer display immediately when the page loads
         updateDisplay();
     </script>
 </body>
