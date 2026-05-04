@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Focus Timer</title>
-    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <style>
-        /* Imported a sleek, modern geometric font */
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
 
         :root {
@@ -84,7 +82,7 @@
 
         #timer {
             font-size: 8.5rem;
-            font-weight: 700; /* Adjusted weight for the new font */
+            font-weight: 700;
             margin-bottom: 30px;
             font-variant-numeric: tabular-nums;
             letter-spacing: -0.2rem; 
@@ -178,7 +176,6 @@
 
         .settings-panel {
             margin-top: 15px;
-            /* Added glassmorphism effect */
             background: rgba(30, 30, 30, 0.4);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -187,7 +184,8 @@
             border-radius: 20px;
             display: flex;
             gap: 20px;
-            align-items: flex-end;
+            align-items: center; /* Center items since the button is gone */
+            justify-content: center;
             opacity: 0;
             transform: translateY(-10px) scale(0.95);
             pointer-events: none;
@@ -219,7 +217,6 @@
             margin-left: 2px;
         }
 
-        /* Redesigned Input Boxes */
         .input-group input {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -242,7 +239,6 @@
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05), inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        /* Hides the default browser up/down arrows in number inputs */
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button {
             -webkit-appearance: none;
@@ -250,29 +246,6 @@
         }
         input[type="number"] {
             -moz-appearance: textfield;
-        }
-
-        .settings-panel button {
-            background: var(--text);
-            color: #121212;
-            border: none;
-            padding: 11px 24px;
-            border-radius: 12px;
-            font-family: var(--font);
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .settings-panel button:hover {
-            background: #ffffff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2);
-        }
-        
-        .settings-panel button:active {
-            transform: translateY(0);
         }
     </style>
 </head>
@@ -296,13 +269,12 @@
         <div class="settings-panel" id="settingsPanel">
             <div class="input-group">
                 <label>Focus</label>
-                <input type="number" id="focusInput" value="25" min="1" max="99">
+                <input type="number" id="focusInput" value="25" min="1" max="99" oninput="applySettings()">
             </div>
             <div class="input-group">
                 <label>Break</label>
-                <input type="number" id="breakInput" value="5" min="1" max="99">
+                <input type="number" id="breakInput" value="5" min="1" max="99" oninput="applySettings()">
             </div>
-            <button onclick="applySettings()">Apply</button>
         </div>
     </div>
 
@@ -427,17 +399,19 @@
         }
 
         function applySettings() {
-            const focusInput = document.getElementById('focusInput').value;
-            const breakInput = document.getElementById('breakInput').value;
+            const focusInputVal = document.getElementById('focusInput').value;
+            const breakInputVal = document.getElementById('breakInput').value;
 
-            focusMinutes = Math.max(1, parseInt(focusInput) || 25);
-            breakMinutes = Math.max(1, parseInt(breakInput) || 5);
+            // Only update if the user has actually typed a valid number (prevents breaking if they delete the number to type a new one)
+            if (focusInputVal !== '' && parseInt(focusInputVal) > 0) {
+                focusMinutes = parseInt(focusInputVal);
+            }
+            if (breakInputVal !== '' && parseInt(breakInputVal) > 0) {
+                breakMinutes = parseInt(breakInputVal);
+            }
 
-            document.getElementById('focusInput').value = focusMinutes;
-            document.getElementById('breakInput').value = breakMinutes;
-
+            // Instantly apply the changes to the active timer without closing the panel
             resetTimer();
-            toggleSettings();
         }
         
         updateDisplay();
