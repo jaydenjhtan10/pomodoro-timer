@@ -32,6 +32,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: relative;
         }
 
         .modes {
@@ -87,12 +88,9 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            
-            /* Added smooth transitions for opacity and scale */
             transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* The class applied via JavaScript to fade out the timer */
         .timer-fade-out {
             opacity: 0;
             transform: scale(0.9);
@@ -109,14 +107,12 @@
         }
 
         @keyframes slideUpAnim {
-            0% {
-                transform: translateY(20px);
-                opacity: 0.3;
-            }
-            100% {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            0% { transform: translateY(20px); opacity: 0.3; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .controls {
+            margin-bottom: 30px;
         }
 
         .controls button {
@@ -153,6 +149,92 @@
         #startBtn:hover {
             background: #ffffff;
         }
+
+        /* --- Settings Panel UI --- */
+        .settings-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            opacity: 0.4;
+            cursor: pointer;
+            font-size: 0.9rem;
+            letter-spacing: 0.05rem;
+            text-transform: uppercase;
+            transition: opacity 0.3s ease;
+        }
+
+        .settings-btn:hover {
+            opacity: 0.8;
+        }
+
+        .settings-panel {
+            margin-top: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute;
+            top: 100%;
+        }
+
+        .settings-panel.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .input-group label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05rem;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: var(--font);
+            font-size: 1rem;
+            width: 60px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--text);
+        }
+
+        .settings-panel button {
+            background: var(--text);
+            color: #121212;
+            border: none;
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .settings-panel button:hover {
+            background: #d1d5db;
+        }
     </style>
 </head>
 <body>
@@ -162,33 +244,50 @@
             <button onclick="setMode('focus')" id="focusBtn" class="active">Focus</button>
             <button onclick="setMode('break')" id="breakBtn">Break</button>
         </div>
+        
         <div id="timer"></div>
+        
         <div class="controls">
             <button onclick="toggleTimer()" id="startBtn">Start</button>
             <button onclick="resetTimer()">Reset</button>
         </div>
+
+        <button class="settings-btn" onclick="toggleSettings()">Settings</button>
+
+        <div class="settings-panel" id="settingsPanel">
+            <div class="input-group">
+                <label>Focus (min)</label>
+                <input type="number" id="focusInput" value="25" min="1" max="99">
+            </div>
+            <div class="input-group">
+                <label>Break (min)</label>
+                <input type="number" id="breakInput" value="5" min="1" max="99">
+            </div>
+            <button onclick="applySettings()">Apply</button>
+        </div>
     </div>
 
     <script>
-        const FOCUS_TIME = 25 * 60;
-        const BREAK_TIME = 5 * 60;
+        // Use variables instead of constants so the user can change them
+        let focusMinutes = 25;
+        let breakMinutes = 5;
         
-        let timeLeft = FOCUS_TIME;
+        let timeLeft = focusMinutes * 60;
         let timerInterval = null;
         let isRunning = false;
         let currentMode = 'focus';
-        let isTransitioning = false; // Prevents clicking during a fade
+        let isTransitioning = false; 
 
         const timerDisplay = document.getElementById('timer');
         const startBtn = document.getElementById('startBtn');
         const focusBtn = document.getElementById('focusBtn');
         const breakBtn = document.getElementById('breakBtn');
+        const settingsPanel = document.getElementById('settingsPanel');
 
         function updateDisplay() {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
             
-            // Added a leading zero to minutes so '5:00' becomes '05:00'
             const newTimeStr = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 
             if (timerDisplay.children.length !== newTimeStr.length) {
@@ -219,7 +318,6 @@
         }
 
         function setMode(mode) {
-            // Do not interrupt an active transition
             if (isTransitioning) return;
             isTransitioning = true;
 
@@ -227,31 +325,26 @@
             isRunning = false;
             startBtn.textContent = 'Start';
 
-            // 1. Fade out the timer and shrink it
             timerDisplay.classList.add('timer-fade-out');
 
-            // 2. Wait 400ms for the CSS animation to finish, then swap the data
             setTimeout(() => {
                 currentMode = mode;
 
                 if (mode === 'focus') {
-                    timeLeft = FOCUS_TIME;
+                    timeLeft = focusMinutes * 60;
                     document.body.style.backgroundColor = 'var(--bg-focus)';
                     focusBtn.classList.add('active');
                     breakBtn.classList.remove('active');
                 } else if (mode === 'break') {
-                    timeLeft = BREAK_TIME;
+                    timeLeft = breakMinutes * 60;
                     document.body.style.backgroundColor = 'var(--bg-break)';
                     breakBtn.classList.add('active');
                     focusBtn.classList.remove('active');
                 }
                 
                 updateDisplay();
-                
-                // 3. Remove the fade class to bring the timer back up
                 timerDisplay.classList.remove('timer-fade-out');
                 
-                // 4. Unlock the transition state
                 setTimeout(() => {
                     isTransitioning = false;
                 }, 400); 
@@ -273,7 +366,6 @@
                         isRunning = false;
                         startBtn.textContent = 'Start';
                         
-                        // Wait 1 second so the user can see '00:00' before auto-switching
                         setTimeout(() => {
                             setMode(currentMode === 'focus' ? 'break' : 'focus');
                         }, 1000);
@@ -288,8 +380,30 @@
             clearInterval(timerInterval);
             isRunning = false;
             startBtn.textContent = 'Start';
-            timeLeft = currentMode === 'focus' ? FOCUS_TIME : BREAK_TIME;
+            timeLeft = currentMode === 'focus' ? focusMinutes * 60 : breakMinutes * 60;
             updateDisplay();
+        }
+
+        // --- Settings Logic ---
+        function toggleSettings() {
+            settingsPanel.classList.toggle('show');
+        }
+
+        function applySettings() {
+            const focusInput = document.getElementById('focusInput').value;
+            const breakInput = document.getElementById('breakInput').value;
+
+            // Basic validation to prevent negative numbers or zeros
+            focusMinutes = Math.max(1, parseInt(focusInput) || 25);
+            breakMinutes = Math.max(1, parseInt(breakInput) || 5);
+
+            // Update the input fields just in case the user typed invalid data and it got corrected
+            document.getElementById('focusInput').value = focusMinutes;
+            document.getElementById('breakInput').value = breakMinutes;
+
+            // Stop the timer, apply the new time, and hide settings
+            resetTimer();
+            toggleSettings();
         }
         
         updateDisplay();
