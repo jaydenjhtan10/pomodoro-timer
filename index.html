@@ -368,6 +368,11 @@
                 clearInterval(timerInterval);
                 startBtn.textContent = 'Start';
             } else {
+                // -- THE FIX: Manually tick down once immediately for instant feedback --
+                timeLeft--;
+                updateDisplay();
+                
+                // Then hand it off to the interval to handle the rest
                 timerInterval = setInterval(() => {
                     timeLeft--;
                     updateDisplay();
