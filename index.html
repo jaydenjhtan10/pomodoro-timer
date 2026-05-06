@@ -93,7 +93,7 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            padding: 0 10px; /* Fixes the squared-off zero */
+            padding: 0 10px; 
             transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -228,20 +228,3 @@
             font-family: var(--font);
             font-size: 1.1rem;
             font-weight: 600;
-            width: 45px;
-            text-align: center;
-            outline: none;
-            transition: all 0.3s ease;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .input-group input:focus {
-            border-color: rgba(255, 255, 255, 0.5);
-            background: rgba(0, 0, 0, 0.5);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05), inset 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
