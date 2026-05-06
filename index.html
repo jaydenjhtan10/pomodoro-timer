@@ -301,6 +301,40 @@
             
             const newTimeStr = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 
+            // --- NEW: Update the browser tab title ---
+            const modeName = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
+            document.title = `(${newTimeStr}) ${modeName}`;
+            // ----------------------------------------
+
+            if (timerDisplay.children.length !== newTimeStr.length) {
+                timerDisplay.innerHTML = '';
+                for (let i = 0; i < newTimeStr.length; i++) {
+                    const span = document.createElement('span');
+                    span.className = 'digit';
+                    
+                    if (newTimeStr[i] === ':') {
+                        span.style.minWidth = '0.25em';
+                    }
+                    
+                    span.textContent = newTimeStr[i];
+                    timerDisplay.appendChild(span);
+                }
+                return;
+            }
+
+            const spans = timerDisplay.children;
+            for (let i = 0; i < newTimeStr.length; i++) {
+                if (spans[i].textContent !== newTimeStr[i]) {
+                    spans[i].textContent = newTimeStr[i];
+                    spans[i].classList.remove('slide-up');
+                    void spans[i].offsetWidth; 
+                    spans[i].classList.add('slide-up');
+                }
+            }
+        }
+            
+            const newTimeStr = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
             if (timerDisplay.children.length !== newTimeStr.length) {
                 timerDisplay.innerHTML = '';
                 for (let i = 0; i < newTimeStr.length; i++) {
